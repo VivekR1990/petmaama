@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:pet_care/bottom_tab_bar.dart';
-import 'package:pet_care/home_screen.dart';
-import 'package:pet_care/profile_page.dart';
-import 'package:pet_care/service_page.dart';
-import 'package:pet_care/store_page.dart';
+import 'package:pet_care/presentation/main_page/bottom_tab_bar.dart';
+import 'package:pet_care/presentation/home_screen.dart';
+import 'package:pet_care/presentation/profile_page.dart';
+import 'package:pet_care/presentation/service_page.dart';
+import 'package:pet_care/presentation/store_page.dart';
 
 class MainPageScreen extends StatelessWidget {
   MainPageScreen({super.key});

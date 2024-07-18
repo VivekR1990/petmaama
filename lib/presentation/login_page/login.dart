@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pet_care/main_page.dart';
-import 'package:pet_care/register.dart';
+import 'package:pet_care/presentation/main_page/main_page.dart';
+import 'package:pet_care/presentation/login_page/register.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
