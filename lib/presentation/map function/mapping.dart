@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
-
+import 'package:geolocator/geolocator.dart';
 
 class LocationScreen extends StatefulWidget {
   @override
@@ -10,8 +10,9 @@ class LocationScreen extends StatefulWidget {
 
 class _LocationScreenState extends State<LocationScreen> {
   GoogleMapController? mapController;
-  LatLng _currentPosition = LatLng(9.9312, 76.2673); // Default to Ernakulam, Kerala
+  LatLng _currentPosition = const LatLng(9.9312, 76.2673); // Default to Ernakulam, Kerala
   String _address = "Pipeline Road, Palarivattom, Ernakulam, Kerala - 682028";
+  final TextEditingController _searchController = TextEditingController();
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -23,6 +24,10 @@ class _LocationScreenState extends State<LocationScreen> {
     });
   }
 
+  void _onCameraIdle() {
+    _getAddressFromLatLng();
+  }
+
   Future<void> _getAddressFromLatLng() async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -32,9 +37,27 @@ class _LocationScreenState extends State<LocationScreen> {
 
       Placemark place = placemarks[0];
       setState(() {
-        _address =
-            "${place.street}, ${place.locality}, ${place.administrativeArea} - ${place.postalCode}";
+        _address = "${place.street}, ${place.locality}, ${place.administrativeArea} - ${place.postalCode}";
       });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> _searchAndNavigate() async {
+    try {
+      List<Location> locations = await locationFromAddress(_searchController.text);
+      if (locations.isNotEmpty) {
+        Location location = locations[0];
+        LatLng newPosition = LatLng(location.latitude, location.longitude);
+
+        mapController?.animateCamera(CameraUpdate.newLatLng(newPosition));
+        setState(() {
+          _currentPosition = newPosition;
+        });
+
+        await _getAddressFromLatLng();
+      }
     } catch (e) {
       print(e);
     }
@@ -43,22 +66,27 @@ class _LocationScreenState extends State<LocationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Location'),
-      ),
       body: Stack(
         children: [
           GoogleMap(
             onMapCreated: _onMapCreated,
             onCameraMove: _onCameraMove,
+            onCameraIdle: _onCameraIdle,
             initialCameraPosition: CameraPosition(
               target: _currentPosition,
               zoom: 15.0,
             ),
             markers: {
               Marker(
-                markerId: MarkerId('currentLocation'),
+                markerId: const MarkerId('currentLocation'),
                 position: _currentPosition,
+                draggable: true,
+                onDragEnd: (LatLng newPosition) {
+                  setState(() {
+                    _currentPosition = newPosition;
+                  });
+                  _getAddressFromLatLng();
+                },
               ),
             },
           ),
@@ -67,11 +95,11 @@ class _LocationScreenState extends State<LocationScreen> {
             left: 20.0,
             right: 20.0,
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10.0),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black26,
                     blurRadius: 10.0,
@@ -79,10 +107,14 @@ class _LocationScreenState extends State<LocationScreen> {
                 ],
               ),
               child: TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Select a location',
+                  hintText: 'Search a location',
                   border: InputBorder.none,
-                  suffixIcon: Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: _searchAndNavigate,
+                  ),
                 ),
               ),
             ),
@@ -92,8 +124,8 @@ class _LocationScreenState extends State<LocationScreen> {
             left: 0,
             right: 0,
             child: Container(
-              padding: EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(16.0),
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(20.0),
@@ -110,35 +142,36 @@ class _LocationScreenState extends State<LocationScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.location_on),
-                      SizedBox(width: 8.0),
+                      const Icon(Icons.location_on),
+                      const SizedBox(width: 8.0),
                       Expanded(
                         child: Text(
                           _address,
-                          style: TextStyle(fontSize: 16.0),
+                          style: const TextStyle(fontSize: 16.0),
                         ),
                       ),
                       TextButton(
-                        onPressed: () async {
-                          await _getAddressFromLatLng();
-                        },
-                        child: Text('Change'),
+                        onPressed: _getAddressFromLatLng,
+                        child:  const Text('Change'),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8.0),
+                  const SizedBox(height: 8.0),
                   ElevatedButton(
                     onPressed: () {
                       // Handle confirm location action
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Location confirmed: $_address')),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.yellow,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.0),
                       ),
-                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
