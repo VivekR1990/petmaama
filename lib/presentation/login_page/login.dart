@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_care/api_functions/api_functions.dart';
+import 'package:pet_care/model/signin_model.dart';
 import 'package:pet_care/presentation/main_page/main_page.dart';
 import 'package:pet_care/presentation/login_page/signup_page.dart';
 
@@ -12,6 +14,29 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  void _login() async {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    Login user = Login(email: email, password: password);
+
+    bool success = await Api.postSignin(user.toJson());
+    if (mounted) {
+      if (success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MainPageScreen(),
+          ),
+        );
+      } else {
+        // Show an error message to the user.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sign-in failed. Please try again.')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,14 +108,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>  MainPageScreen(),
-                    ),
-                  );
-                },
+                onPressed: _login,  // Call the _login method
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 60),
                   backgroundColor: Colors.amber,
@@ -114,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const RegisterWidget(),
+                        builder: (context) => const RegisterWidget(),  // Navigate to SignUpPage
                       ),
                     );
                   },
