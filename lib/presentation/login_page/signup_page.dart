@@ -1,20 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:pet_care/api_functions/api_functions.dart';
+import 'package:pet_care/model/signup_model.dart';
 
 class RegisterWidget extends StatefulWidget {
   const RegisterWidget({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _RegisterWidgetState createState() => _RegisterWidgetState();
+  RegisterWidgetState createState() => RegisterWidgetState();
 }
 
-class _RegisterWidgetState extends State<RegisterWidget> {
+class RegisterWidgetState extends State<RegisterWidget> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
+  void _register() async {
+    if (_passwordController.text == _confirmPasswordController.text) {
+      final register = Register(
+        email: _emailController.text,
+        password: _passwordController.text,
+        name: _fullNameController.text,
+        phoneNumber: _phoneController.text,
+      );
+
+      bool success = await Api.postSignup(register.toJson());
+
+      if (!mounted) return;
+
+      if (success) {
+        // Handle successful signup, e.g., navigate to another page
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful')),
+        );
+      } else {
+        // Handle signup failure
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration failed')),
+        );
+      }
+    } else {
+      // Handle password mismatch
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,17 +99,6 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                 _buildTextField(_phoneController),
                 const SizedBox(height: 24),
                 const Text(
-                  'Location',
-                  style: TextStyle(
-                    color: Color.fromRGBO(0, 0, 0, 1),
-                    fontSize: 16,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _buildTextField(_locationController),
-                const SizedBox(height: 24),
-                const Text(
                   'Password',
                   style: TextStyle(
                     color: Color.fromRGBO(0, 0, 0, 1),
@@ -101,9 +122,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                 const SizedBox(height: 40),
                 Center(
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Implement your registration logic here
-                    },
+                    onPressed: _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber,
                       minimumSize: const Size(200, 60),

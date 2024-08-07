@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LocationScreen()),
+                MaterialPageRoute(builder: (context) => const LocationScreen()),
               );
             },
             child: const Icon(Icons.location_on_outlined),

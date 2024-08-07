@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 
 class LocationScreen extends StatefulWidget {
+  const LocationScreen({super.key});
+
   @override
-  _LocationScreenState createState() => _LocationScreenState();
+  LocationScreenState createState() => LocationScreenState();
 }
 
-class _LocationScreenState extends State<LocationScreen> {
+class LocationScreenState extends State<LocationScreen> {
   GoogleMapController? mapController;
   LatLng _currentPosition = const LatLng(9.9312, 76.2673); // Default to Ernakulam, Kerala
   String _address = "Pipeline Road, Palarivattom, Ernakulam, Kerala - 682028";
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    mapController?.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -35,12 +43,18 @@ class _LocationScreenState extends State<LocationScreen> {
         _currentPosition.longitude,
       );
 
+      if (!mounted) return;
+
       Placemark place = placemarks[0];
       setState(() {
         _address = "${place.street}, ${place.locality}, ${place.administrativeArea} - ${place.postalCode}";
       });
     } catch (e) {
-      print(e);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     }
   }
 
@@ -59,133 +73,139 @@ class _LocationScreenState extends State<LocationScreen> {
         await _getAddressFromLatLng();
       }
     } catch (e) {
-      print(e);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          GoogleMap(
-            onMapCreated: _onMapCreated,
-            onCameraMove: _onCameraMove,
-            onCameraIdle: _onCameraIdle,
-            initialCameraPosition: CameraPosition(
-              target: _currentPosition,
-              zoom: 15.0,
-            ),
-            markers: {
-              Marker(
-                markerId: const MarkerId('currentLocation'),
-                position: _currentPosition,
-                draggable: true,
-                onDragEnd: (LatLng newPosition) {
-                  setState(() {
-                    _currentPosition = newPosition;
-                  });
-                  _getAddressFromLatLng();
-                },
+    return SafeArea(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            GoogleMap(
+              onMapCreated: _onMapCreated,
+              onCameraMove: _onCameraMove,
+              onCameraIdle: _onCameraIdle,
+              initialCameraPosition: CameraPosition(
+                target: _currentPosition,
+                zoom: 15.0,
               ),
-            },
-          ),
-          Positioned(
-            top: 20.0,
-            left: 20.0,
-            right: 20.0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10.0),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10.0,
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search a location',
-                  border: InputBorder.none,
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: _searchAndNavigate,
-                  ),
+              markers: {
+                Marker(
+                  markerId: const MarkerId('currentLocation'),
+                  position: _currentPosition,
+                  draggable: true,
+                  onDragEnd: (LatLng newPosition) {
+                    setState(() {
+                      _currentPosition = newPosition;
+                    });
+                    _getAddressFromLatLng();
+                  },
                 ),
-              ),
+              },
             ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20.0),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10.0,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: Text(
-                          _address,
-                          style: const TextStyle(fontSize: 16.0),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _getAddressFromLatLng,
-                        child:  const Text('Change'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8.0),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Handle confirm location action
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Location confirmed: $_address')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+            Positioned(
+              top: 20.0,
+              left: 20.0,
+              right: 20.0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10.0,
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search a location',
+                    border: InputBorder.none,
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _searchAndNavigate,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(20.0),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10.0,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
                       children: [
-                        Text(
-                          'Confirm Location',
-                          style: TextStyle(fontSize: 18.0),
+                        const Icon(Icons.location_on),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: Text(
+                            _address,
+                            style: const TextStyle(fontSize: 16.0),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _getAddressFromLatLng,
+                          child: const Text('Change'),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Handle confirm location action
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Location confirmed: $_address')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.yellow,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Confirm Location',
+                            style: TextStyle(fontSize: 18.0),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
