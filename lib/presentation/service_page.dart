@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+i<<<<<<< HEAD
 import 'package:pet_care/design%20v2/loginpage.dart';
+=======
+>>>>>>> b249a3b91729a634dbaf63a9cc78171d042747e3
 
 ValueNotifier<bool> scrollNotifier = ValueNotifier(true);
 int randomIndex = 1;
@@ -231,7 +234,3 @@ class _ServicePageState extends State<ServicePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
