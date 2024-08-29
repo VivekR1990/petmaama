@@ -39,7 +39,11 @@ dependencies:
   geocoding: ^3.0.0
   permission_handler: ^11.3.1
   http: ^1.2.2
+<<<<<<< HEAD
+  location: ^6.0.2
+=======
   location: ^7.0.0
+>>>>>>> b249a3b91729a634dbaf63a9cc78171d042747e3
   geolocator: ^12.0.0
 
 dev_dependencies:
